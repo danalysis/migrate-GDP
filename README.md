@@ -30,8 +30,8 @@ met <- read.csv(url("https://raw.githubusercontent.com/danalysis/migrate-GDP/mas
     ## 5          AND     高收入国家
     ## 6          ARB           <NA>
 
-合并移民和GDP数据
------------------
+合并移民和GDP数据（2000-2005）
+------------------------------
 
     ##       mig.country_dest_id mig.country_orig_id mig.country_orig
     ## 36249                 USA                 MEX           Mexico

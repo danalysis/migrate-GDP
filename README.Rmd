@@ -25,7 +25,7 @@ head(met.by)
 ```
 
 
-## 合并移民和GDP数据
+## 合并移民和GDP数据（2000-2005）
 
 ```{r echo=FALSE}
 mig.flow <- data.frame(mig$country_orig, mig$country_orig_id, mig$country_dest, mig$country_dest_id, mig$countryflow_2005, stringsAsFactors = FALSE)
