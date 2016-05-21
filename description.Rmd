@@ -1,0 +1,84 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 导入移民和GDP数据
+
+```{r GDP}
+gdp <- read.csv(url("https://raw.githubusercontent.com/danalysis/migrate-GDP/master/data/API_NY.GDP.PCAP.CD_DS2_zh_csv_v2.csv"), header=TRUE, stringsAsFactors = FALSE)
+mig <- read.csv(url("https://raw.githubusercontent.com/danalysis/migrate-GDP/master/data/Data.on.the.global.flow.of.people_Version.March2014.csv"), header=TRUE, stringsAsFactors = FALSE)
+met <- read.csv(url("https://raw.githubusercontent.com/danalysis/migrate-GDP/master/data/Metadata_Country_API_NY.GDP.PCAP.CD_DS2_zh_csv_v2.csv"), header=TRUE, stringsAsFactors = FALSE)
+```
+
+## 对GDP数据进行清洗
+```{r echo=FALSE}
+Income.Group <- gsub("非|经合组织", "" ,met$Income_Group)
+met.by <- data.frame(Country.Code = met$Country.Code, Income.Group)
+met.by$Income.Group <- factor(met.by$Income.Group, order = TRUE, levels = c("低收入国家","中低等收入国家","中高等收入国家", "高收入国家"))
+summary(met.by)
+head(met.by)
+```
+
+
+## 合并移民和GDP数据
+
+```{r echo=FALSE}
+mig.flow <- data.frame(mig$country_orig, mig$country_orig_id, mig$country_dest, mig$country_dest_id, mig$countryflow_2005, stringsAsFactors = FALSE)
+
+names(met.by) <- c("mig.country_orig_id", "mig.orig.income.group")
+mig.flow <- merge(mig.flow, met.by, by="mig.country_orig_id", all.x = TRUE)
+
+names(met.by) <- c("mig.country_dest_id", "mig.dest.income.group")
+mig.flow <- merge(mig.flow, met.by, by="mig.country_dest_id", all.x = TRUE)
+
+mig.flow.order <- mig.flow[order(-mig.flow$mig.countryflow_2005),]
+head(mig.flow.order)
+
+```
+
+## 结论
+
+在2000~2005年间，在全球所有移民人口中，93%的人口从GDP水平较低的国家，移民到GDP水平较高的国家
+
+```{r echo = FALSE}
+
+flow <- aggregate(x = mig.flow.order$mig.countryflow_2005, by = list(mig.flow.order$mig.orig.income.group, mig.flow.order$mig.dest.income.group), FUN = sum)
+flow.order <- flow[order(flow$x, decreasing = TRUE),]
+flow.order$pct <- flow.order$x / sum(flow.order$x)
+```
+
+```{r echo = FALSE}
+flow.low2high <- flow.order[as.numeric(flow.order$Group.2) >= as.numeric(flow.order$Group.1),]
+flow.high2low <- flow.order[as.numeric(flow.order$Group.2) < as.numeric(flow.order$Group.1),]
+
+direction <- c("L->H", "H->L")
+flownum <- c(sum(flow.low2high$x), sum(flow.high2low$x))
+
+flow.direction <- data.frame(direction, flownum)
+names(flow.direction) <- c("Direction", "Number")
+
+flow.direction$Pct <- flow.direction$Number / sum(flow.direction$Number)
+head(flow.direction)
+```
+
+71%的移民人口来自于中等收入国家，是移民的主力军
+```{r echo = FALSE}
+
+out <- aggregate(x = mig.flow.order$mig.countryflow_2005, by = list(mig.flow.order$mig.orig.income.group), FUN=sum)
+out.order <- out[order(out$x, decreasing = TRUE),]
+out.order$pct <- out.order$x / sum(out.order$x)
+out.order
+```
+
+高收入国家接受来自全球75%的移民人口
+```{r echo = FALSE}
+flowin <- aggregate(x = mig.flow.order$mig.countryflow_2005, by = list(mig.flow.order$mig.dest.income.group), FUN=sum)
+flowin.order <- flowin[order(flowin$x, decreasing = TRUE),]
+flowin.order$pct <- flowin.order$x / sum(flowin.order$x)
+flowin.order
+```
